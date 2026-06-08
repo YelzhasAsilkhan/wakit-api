@@ -211,6 +211,7 @@ Types: text, file, data. Kinds vary by type (text: text/reaction/caption; file: 
 |------|-------------|
 | /rest/v1/rpc/get_authorized_orgs | Get organizations the current user has access to |
 | /rest/v1/rpc/change_contact_address | Change a contact's address (phone number migration) |
+| /rest/v1/rpc/restart_conversation | Close active conversation and start a fresh one |
 
 ---
 
@@ -223,6 +224,18 @@ Types: text, file, data. Kinds vary by type (text: text/reaction/caption; file: 
 | /functions/v1/whatsapp-management/signup | POST | Initiate WhatsApp Embedded Signup |
 | /functions/v1/whatsapp-management/templates | GET | List WhatsApp message templates |
 | /functions/v1/whatsapp-management/templates | POST | Create a WhatsApp message template |
+
+### Telephony Management
+
+| Path | Method | Description |
+|------|--------|-------------|
+| /functions/v1/telephony-management/connect | POST | Connect Twilio account |
+| /functions/v1/telephony-management/connect | DELETE | Disconnect telephony account |
+| /functions/v1/telephony-management/call | POST | Initiate outbound call |
+| /functions/v1/telephony-management/accounts | GET | List telephony accounts |
+
+Webhook URL for Twilio voice status callbacks:
+`/functions/v1/telephony-webhook`
 
 ---
 

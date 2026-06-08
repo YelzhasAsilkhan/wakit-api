@@ -414,6 +414,81 @@ interface SendMessageParams {
   allowedContacts: string[];
 }
 
+interface RestartConversationParams {
+  supabase: SupabaseClient<Database>;
+  conversationId: string;
+}
+
+export async function restartConversation(params: RestartConversationParams) {
+  const { data: newId, error } = await params.supabase.rpc(
+    "restart_conversation",
+    { p_conversation_id: params.conversationId },
+  );
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return { conversation_id: newId, status: "restarted" };
+}
+
+interface InitiateCallParams {
+  supabase: SupabaseClient<Database>;
+  orgId: string;
+  contactPhone: string;
+  accountPhone?: string;
+  twiml?: string;
+}
+
+export async function initiateCall(params: InitiateCallParams) {
+  const contactPhone = normalizePhone(params.contactPhone);
+
+  let query = params.supabase
+    .from("organizations_addresses")
+    .select("address, extra")
+    .eq("organization_id", params.orgId)
+    .eq("service", "telephony")
+    .eq("status", "connected");
+
+  if (params.accountPhone) {
+    const digits = normalizePhone(params.accountPhone);
+    query = query.or(
+      `address.eq.${digits},extra->>phone_number.eq.${params.accountPhone},extra->>phone_number.eq.+${digits}`,
+    );
+  }
+
+  const { data: accounts } = await query.limit(1).throwOnError();
+
+  if (!accounts.length) {
+    throw new Error("No connected telephony account found.");
+  }
+
+  const account = accounts[0];
+
+  await params.supabase
+    .from("messages")
+    .insert({
+      organization_id: params.orgId,
+      organization_address: account.address,
+      contact_address: contactPhone,
+      service: "telephony",
+      direction: "outgoing",
+      content: {
+        version: "1",
+        type: "data",
+        kind: "call",
+        data: {
+          action: "dial",
+          direction: "outbound",
+          twiml: params.twiml,
+        },
+      },
+    })
+    .throwOnError();
+
+  return { status: "queued", contact_phone: contactPhone };
+}
+
 export async function sendMessage(params: SendMessageParams) {
   const contactPhone = normalizePhone(params.contactPhone);
   const accountPhone = params.accountPhone

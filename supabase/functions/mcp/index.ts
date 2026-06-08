@@ -246,6 +246,56 @@ function createMcpServer(
   );
 
   server.registerTool(
+    "restart_conversation",
+    {
+      description:
+        "Close the current conversation and start a fresh one (empty history).",
+      inputSchema: {
+        conversation_id: z.string().describe("Conversation UUID to restart"),
+      },
+    },
+    async ({ conversation_id }) => {
+      const result = await tools.restartConversation({
+        supabase,
+        conversationId: conversation_id,
+      });
+
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result) }],
+      };
+    },
+  );
+
+  server.registerTool(
+    "initiate_call",
+    {
+      description: "Start an outbound phone call via telephony integration.",
+      inputSchema: {
+        contact_phone: z.string().describe("Contact phone number to call"),
+        account_phone: z.string().optional().describe(
+          "Telephony account phone (required if >1 account)",
+        ),
+        twiml: z.string().optional().describe(
+          "Optional TwiML instructions for the call",
+        ),
+      },
+    },
+    async ({ contact_phone, account_phone, twiml }) => {
+      const result = await tools.initiateCall({
+        supabase,
+        orgId,
+        contactPhone: contact_phone,
+        accountPhone: account_phone,
+        twiml,
+      });
+
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result) }],
+      };
+    },
+  );
+
+  server.registerTool(
     "send_message",
     {
       description:

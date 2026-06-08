@@ -42,4 +42,4 @@ where service = 'whatsapp';
 create index organizations_addresses_phone_number_idx
 on public.organizations_addresses
 using btree ((extra->>'phone_number'))
-where service = 'whatsapp';
+where service in ('whatsapp', 'telephony');

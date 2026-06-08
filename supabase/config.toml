@@ -35,3 +35,18 @@ entrypoint = "./functions/whatsapp-dispatcher/index.ts"
 verify_jwt = false
 import_map = "./functions/deno.json"
 entrypoint = "./functions/mcp/index.ts"
+
+[functions.telephony-webhook]
+verify_jwt = false
+import_map = "./functions/deno.json"
+entrypoint = "./functions/telephony-webhook/index.ts"
+
+[functions.telephony-dispatcher]
+verify_jwt = false
+import_map = "./functions/deno.json"
+entrypoint = "./functions/telephony-dispatcher/index.ts"
+
+[functions.telephony-management]
+verify_jwt = false
+import_map = "./functions/deno.json"
+entrypoint = "./functions/telephony-management/index.ts"

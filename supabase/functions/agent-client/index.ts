@@ -126,6 +126,17 @@ Deno.serve(async (req) => {
     conv.extra = {};
   }
 
+  if (
+    conv.service === "telephony" ||
+    incoming.content?.kind === "call"
+  ) {
+    log.info(
+      `Skipping agent response for telephony/call message in conversation ${conv.id}.`,
+    );
+
+    return new Response("ok", { headers: corsHeaders });
+  }
+
   const {
     organizations: org,
     contacts_addresses: contact_address,

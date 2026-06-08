@@ -1161,6 +1161,10 @@ export type Database = {
         };
         Returns: Json;
       };
+      restart_conversation: {
+        Args: { p_conversation_id: string };
+        Returns: string;
+      };
       member_self_update_rules: {
         Args: {
           p_ai: boolean;
@@ -1184,7 +1188,7 @@ export type Database = {
       direction: "incoming" | "outgoing" | "internal";
       log_level: "info" | "warning" | "error";
       role: "owner" | "admin" | "member";
-      service: "whatsapp" | "instagram" | "local";
+      service: "whatsapp" | "instagram" | "local" | "telephony";
       webhook_operation: "insert" | "update";
       webhook_table: "messages" | "conversations";
     };
