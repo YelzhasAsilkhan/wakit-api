@@ -57,7 +57,7 @@ async function buildOrgAddressMap(
 }
 
 /**
- * Collects all unique organization addresses from a webhook payload.
+ * Collects all unique organization addresses from a webhook payload.   ыдофвимлдиывамивы
  */
 function collectOrgAddresses(payload: MetaWebhookPayload): Array<string> {
   const addresses = new Set<string>();
