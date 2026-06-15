@@ -223,6 +223,7 @@ Types: text, file, data. Kinds vary by type (text: text/reaction/caption; file: 
 | /functions/v1/whatsapp-management/signup | POST | Initiate WhatsApp Embedded Signup |
 | /functions/v1/whatsapp-management/templates | GET | List WhatsApp message templates |
 | /functions/v1/whatsapp-management/templates | POST | Create a WhatsApp message template |
+| /functions/v1/whatsapp-management/start-conversation | POST | Start new chat: send template to a phone number |
 
 ---
 

@@ -23,6 +23,10 @@ import {
   performEmbeddedSignup,
   SignupPayload,
 } from "./embedded_signup.ts";
+import {
+  startConversation,
+  type StartConversationPayload,
+} from "./start_conversation.ts";
 import { type User } from "@supabase/supabase-js";
 
 type TemplatePayload = {
@@ -268,6 +272,26 @@ app.delete(
     );
 
     return c.json(response);
+  },
+);
+
+// Start a new conversation by sending a template to a phone number
+app.post(
+  "/whatsapp-management/start-conversation",
+  requireRoles(["member", "admin", "owner"]),
+  async (c) => {
+    const payload = await c.req.json<StartConversationPayload>();
+    const client = c.get("supabase");
+
+    log.info("Start conversation", {
+      organization_id: payload.organization_id,
+      contact_phone: payload.contact_phone,
+      template: payload.template?.name,
+    });
+
+    const result = await startConversation(client, payload);
+
+    return c.json(result);
   },
 );
 
