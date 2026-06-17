@@ -1,6 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { HTTPException } from "jsr:@hono/hono/http-exception";
+import * as log from "../_shared/logger.ts";
 import type { Database, OutgoingMessage, Template } from "../_shared/supabase.ts";
+import {
+  findTemplateByName,
+  renderTemplatePreviewText,
+} from "./templates.ts";
 
 function normalizePhone(phone: string): string {
   return phone.replace(/\D/g, "");
@@ -11,6 +16,8 @@ export type StartConversationPayload = {
   organization_address?: string;
   contact_phone: string;
   contact_name?: string;
+  /** Optional CRM preview override; otherwise resolved from Meta template body. */
+  text?: string;
   template: Template;
 };
 
@@ -101,6 +108,41 @@ async function ensureContact(
     .throwOnError();
 }
 
+async function resolveTemplatePreviewText(
+  client: SupabaseClient<Database>,
+  organizationId: string,
+  organizationAddress: string,
+  template: Template,
+  override?: string,
+): Promise<string> {
+  if (override?.trim()) return override.trim();
+
+  const meta = await findTemplateByName(
+    client,
+    organizationId,
+    organizationAddress,
+    template.name,
+    template.language.code,
+  );
+
+  if (!meta) {
+    log.warn("Template not found for preview", {
+      name: template.name,
+      language: template.language.code,
+    });
+    return `Шаблон: ${template.name}`;
+  }
+
+  const rendered = renderTemplatePreviewText(meta, template);
+  if (rendered) return rendered;
+
+  log.warn("Template found but preview text is empty", {
+    name: template.name,
+    language: template.language.code,
+  });
+  return `Шаблон: ${template.name}`;
+}
+
 export async function startConversation(
   client: SupabaseClient<Database>,
   payload: StartConversationPayload,
@@ -134,18 +176,35 @@ export async function startConversation(
     payload.contact_name,
   );
 
+  const template: Template = {
+    name: payload.template.name.trim(),
+    language: {
+      code: payload.template.language.code.trim(),
+      policy: payload.template.language.policy ?? "deterministic",
+    },
+    components: payload.template.components,
+  };
+
+  let previewText: string;
+  try {
+    previewText = await resolveTemplatePreviewText(
+      client,
+      payload.organization_id,
+      account.address,
+      template,
+      payload.text,
+    );
+  } catch (error) {
+    log.error("Could not resolve template preview text", error);
+    previewText = `Шаблон: ${template.name}`;
+  }
+
   const content: OutgoingMessage = {
     version: "1",
     type: "data",
     kind: "template",
-    data: {
-      name: payload.template.name,
-      language: {
-        code: payload.template.language.code,
-        policy: payload.template.language.policy ?? "deterministic",
-      },
-      components: payload.template.components,
-    },
+    text: previewText,
+    data: template,
   };
 
   const { data: message } = await client
