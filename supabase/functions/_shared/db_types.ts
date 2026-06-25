@@ -1161,6 +1161,10 @@ export type Database = {
         };
         Returns: Json;
       };
+      mark_conversation_as_read: {
+        Args: { p_conversation_id: string };
+        Returns: number;
+      };
       member_self_update_rules: {
         Args: {
           p_ai: boolean;
