@@ -1161,6 +1161,14 @@ export type Database = {
         };
         Returns: Json;
       };
+      link_contact_to_address: {
+        Args: {
+          p_address: string;
+          p_name: string;
+          p_organization_id: string;
+        };
+        Returns: string;
+      };
       mark_conversation_as_read: {
         Args: { p_conversation_id: string };
         Returns: number;

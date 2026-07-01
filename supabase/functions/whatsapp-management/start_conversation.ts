@@ -60,54 +60,25 @@ async function ensureContact(
   contactPhone: string,
   contactName?: string,
 ) {
+  const trimmedName = contactName?.trim();
+
+  if (trimmedName) {
+    await client.rpc("link_contact_to_address", {
+      p_organization_id: organizationId,
+      p_address: contactPhone,
+      p_name: trimmedName,
+    }).throwOnError();
+    return;
+  }
+
   const { data: existingAddress } = await client
     .from("contacts_addresses")
-    .select("contact_id")
+    .select("address")
     .eq("organization_id", organizationId)
     .eq("address", contactPhone)
     .maybeSingle();
 
-  if (existingAddress?.contact_id) {
-    if (contactName) {
-      await client
-        .from("contacts")
-        .update({ name: contactName })
-        .eq("id", existingAddress.contact_id)
-        .eq("organization_id", organizationId)
-        .throwOnError();
-    }
-    return;
-  }
-
-  let contactId: string | null = null;
-
-  if (contactName) {
-    const { data: contact } = await client
-      .from("contacts")
-      .insert({
-        organization_id: organizationId,
-        name: contactName,
-      })
-      .select("id")
-      .single()
-      .throwOnError();
-
-    contactId = contact.id;
-  }
-
-  // contacts_addresses RLS allows insert for new rows, but update only when
-  // extra/status/service/address stay unchanged (linking contact_id). Upsert
-  // hits the update path when the number already exists (e.g. WhatsApp sync)
-  // and violates that policy.
   if (existingAddress) {
-    if (contactId) {
-      await client
-        .from("contacts_addresses")
-        .update({ contact_id: contactId })
-        .eq("organization_id", organizationId)
-        .eq("address", contactPhone)
-        .throwOnError();
-    }
     return;
   }
 
@@ -117,9 +88,8 @@ async function ensureContact(
       organization_id: organizationId,
       address: contactPhone,
       service: "whatsapp",
-      contact_id: contactId,
       status: "active",
-      extra: contactName ? { name: contactName } : {},
+      extra: {},
     })
     .throwOnError();
 }

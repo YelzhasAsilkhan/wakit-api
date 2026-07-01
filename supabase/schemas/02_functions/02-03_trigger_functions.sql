@@ -141,6 +141,7 @@ $$;
 
 create function public.before_insert_on_messages() returns trigger
 language plpgsql
+set search_path = ''
 as $$
 begin
   -- If conversation_id is already provided, proceed as is
