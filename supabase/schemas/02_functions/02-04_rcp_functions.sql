@@ -99,11 +99,22 @@ begin
   into _messages, _conversation_ids
   from limited l;
 
-  -- Fetch conversations for the messages returned
-  select coalesce(json_agg(row_to_json(c.*)), '[]'::json)
+  -- Fetch conversations for the messages returned, enriched with the saved
+  -- contact name so the UI can display and search conversations by it.
+  -- The saved name lives on public.contacts, reached from the conversation via
+  -- contact_address -> contacts_addresses -> contacts.
+  select coalesce(json_agg(row_to_json(enriched.*)), '[]'::json)
   into _conversations
-  from public.conversations c
-  where c.id = any(_conversation_ids);
+  from (
+    select c.*, ct.name as contact_name
+    from public.conversations c
+    left join public.contacts_addresses ca
+      on ca.organization_id = c.organization_id
+      and ca.address = c.contact_address
+    left join public.contacts ct
+      on ct.id = ca.contact_id
+    where c.id = any(_conversation_ids)
+  ) enriched;
 
   return json_build_object(
     'conversations', _conversations,

@@ -62,7 +62,7 @@ async function ensureContact(
 ) {
   const { data: existingAddress } = await client
     .from("contacts_addresses")
-    .select("contact_id, extra")
+    .select("contact_id")
     .eq("organization_id", organizationId)
     .eq("address", contactPhone)
     .maybeSingle();
@@ -95,16 +95,32 @@ async function ensureContact(
     contactId = contact.id;
   }
 
+  // contacts_addresses RLS allows insert for new rows, but update only when
+  // extra/status/service/address stay unchanged (linking contact_id). Upsert
+  // hits the update path when the number already exists (e.g. WhatsApp sync)
+  // and violates that policy.
+  if (existingAddress) {
+    if (contactId) {
+      await client
+        .from("contacts_addresses")
+        .update({ contact_id: contactId })
+        .eq("organization_id", organizationId)
+        .eq("address", contactPhone)
+        .throwOnError();
+    }
+    return;
+  }
+
   await client
     .from("contacts_addresses")
-    .upsert({
+    .insert({
       organization_id: organizationId,
       address: contactPhone,
       service: "whatsapp",
       contact_id: contactId,
       status: "active",
       extra: contactName ? { name: contactName } : {},
-    }, { onConflict: "organization_id,address" })
+    })
     .throwOnError();
 }
 
