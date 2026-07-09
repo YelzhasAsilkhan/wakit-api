@@ -135,7 +135,7 @@ export async function findTemplateByName(
   }
 
   const body = await response.json() as { data?: TemplateData[] };
-  const templates = body.data ?? [];
+  const templates = (body.data ?? []).filter((template) => template.name === name);
 
   if (!templates.length) {
     log.warn("Template not found in Meta", { name, language, waba_id });
