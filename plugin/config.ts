@@ -77,6 +77,7 @@ export function loadConfig(): Config {
 /**
  * Atomic write: tmp file + rename, 0o600 permissions.
  */
+// Проверка ворквлоу
 export function saveConfig(config: ConfigFile): void {
   mkdirSync(STATE_DIR, { recursive: true, mode: 0o700 });
   const tmp = CONFIG_FILE + ".tmp";
